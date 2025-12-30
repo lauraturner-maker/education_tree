@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    /* PEARSON BRANDING & WIDGET STYLES 
+       Scoped with a unique ID to prevent conflicts with Staffbase styles.
+    */
+    #pearson-proctor-widget {
+        font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        color: #333;
+        overflow: hidden;
+    }
+
+    /* Header */
+    #pearson-proctor-widget .widget-header {
+        background-color: #0077C8; /* Pearson Blue */
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    #pearson-proctor-widget .widget-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    #pearson-proctor-widget .widget-header p {
+        margin: 5px 0 0;
+        opacity: 0.9;
+        font-size: 14px;
+    }
+
+    /* Content Area */
+    #pearson-proctor-widget .widget-content {
+        padding: 25px;
+        min-height: 300px;
+    }
+
+    /* Question Styling */
+    .step-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #005a70;
+    }
+
+    /* Buttons */
+    .option-btn {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: #f4f4f4;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .option-btn:hover {
+        background: #eef7fc;
+        border-color: #0077C8;
+        color: #0077C8;
+        padding-left: 20px; /* Slight slide effect */
+    }
+
+    /* Result Styling */
+    .result-box {
+        border-left: 5px solid #0077C8;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 4px;
+    }
+
+    .result-box.revocation {
+        border-left-color: #D0006F; /* Pearson Raspberry/Red for Danger */
+        background: #fff0f5;
+    }
+
+    .result-box.warning {
+        border-left-color: #F8991D; /* Orange for Warning */
+        background: #fffcf5;
+    }
+
+    .script-block {
+        background: #fff;
+        border: 1px dashed #999;
+        padding: 15px;
+        margin-top: 15px;
+        font-style: italic;
+        color: #444;
+    }
+
+    .action-steps {
+        margin-top: 15px;
+    }
+
+    .action-steps ul {
+        padding-left: 20px;
+    }
+
+    /* Navigation Controls */
+    .nav-controls {
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .nav-btn {
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        text-decoration: underline;
+        font-size: 14px;
+    }
+
+    .nav-btn:hover {
+        color: #0077C8;
+    }
+
+    /* Severity Matrix Table */
+    .severity-matrix-toggle {
+        background: #f0f0f0;
+        padding: 10px 25px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        border-top: 1px solid #ddd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #severity-content {
+        display: none;
+        padding: 20px;
+        background: #fafafa;
+        font-size: 14px;
+    }
+
+    table.matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table.matrix-table th, table.matrix-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    table.matrix-table th {
+        background-color: #005a70;
+        color: white;
+    }
+
+    .badge {
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+    }
+    .badge-warn { background-color: #F8991D; }
+    .badge-revoke { background-color: #D0006F; }
+
+</style>
+</head>
+<body>
+
+<div id="pearson-proctor-widget">
+    <div class="widget-header">
+        <h2>Incident Decision Support</h2>
+        <p>Follow the prompts to determine the appropriate policy response.</p>
+    </div>
+
+    <div class="widget-content" id="tree-container">
+        </div>
+
+    <div class="severity-matrix-toggle" onclick="toggleMatrix()">
+        <span>View Severity Matrix Reference</span>
+        <span>&#9660;</span>
+    </div>
+    <div id="severity-content">
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Behavior</th>
+                    <th>Classification</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Talking to self (muttering)</td>
+                    <td><span class="badge badge-warn">Minor</span></td>
+                    <td>Verbal Warning</td>
+                </tr>
+                <tr>
+                    <td>Looking away from screen briefly</td>
+                    <td><span class="badge badge-warn">Minor</span></td>
+                    <td>Verbal Warning</td>
+                </tr>
+                <tr>
+                    <td>Talking to another person</td>
+                    <td><span class="badge badge-revoke">Severe</span></td>
+                    <td>Immediate Revocation</td>
+                </tr>
+                <tr>
+                    <td>Accessing mobile device/notes</td>
+                    <td><span class="badge badge-revoke">Severe</span></td>
+                    <td>Immediate Revocation</td>
+                </tr>
+                <tr>
+                    <td>Refusing to stop behavior after warning</td>
+                    <td><span class="badge badge-revoke">Severe</span></td>
+                    <td>Revocation</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION: EDIT THIS OBJECT TO CHANGE QUESTIONS/LOGIC ---
+    const decisionData = {
+        start: {
+            text: "What behavior are you observing?",
+            options: [
+                { text: "Candidate is making noise / talking", next: "noise" },
+                { text: "Candidate has prohibited items", next: "items" },
+                { text: "Candidate is looking away / suspicious eye movement", next: "eyes" },
+                { text: "Technical Issue / System Error", next: "tech" }
+            ]
+        },
+        noise: {
+            text: "Who are they talking to?",
+            options: [
+                { text: "They appear to be reading the question aloud to themselves (muttering).", next: "muttering_result" },
+                { text: "They are clearly speaking to another person in the room.", next: "talking_result" },
+                { text: "They are shouting or being disruptive to others.", next: "disruptive_result" }
+            ]
+        },
+        items: {
+            text: "What kind of item is it?",
+            options: [
+                { text: "Mobile phone, tablet, or smart watch.", next: "device_result" },
+                { text: "Written notes, books, or cheat sheets.", next: "cheat_result" },
+                { text: "Comfort aid (tissues, sweater) not previously inspected.", next: "comfort_result" }
+            ]
+        },
+        eyes: {
+            text: "Describe the eye movement:",
+            options: [
+                { text: "Briefly looked up or to the side (thinking).", next: "glance_result" },
+                { text: "Repeatedly looking at a specific area (lap, under desk, wall).", next: "sus_result" }
+            ]
+        },
+        // --- RESULTS ---
+        muttering_result: {
+            type: "result",
+            severity: "warning",
+            title: "Action: Issue Verbal Warning",
+            script: "Excuse me. Please refrain from reading the questions aloud. You must remain silent during the exam.",
+            steps: [
+                "Pause the exam session.",
+                "Read the script above clearly.",
+                "Log the warning in the incident report.",
+                "Resume the exam."
+            ]
+        },
+        talking_result: {
+            type: "result",
+            severity: "revocation",
+            title: "Action: Immediate Revocation",
+            script: "Excuse me. I have observed you speaking to another person. This is a violation of the testing policy. I am ending your exam session now.",
+            steps: [
+                "Immediately stop the exam.",
+                "Read the revocation script.",
+                "File a 'High Severity' incident report.",
+                "Do not allow the candidate to continue."
+            ]
+        },
+        device_result: {
+            type: "result",
+            severity: "revocation",
+            title: "Action: Immediate Revocation",
+            script: "Excuse me. Electronic devices are strictly prohibited. Because a device was accessed, I must terminate this exam session.",
+            steps: [
+                "Stop the exam immediately.",
+                "Ask candidate to put the device away.",
+                "File an incident report noting the type of device.",
+                "Submit video timestamp if applicable."
+            ]
+        },
+        glance_result: {
+            type: "result",
+            severity: "warning",
+            title: "Action: Monitor Closely / Soft Warning",
+            script: "Excuse me. Please keep your eyes on the screen at all times.",
+            steps: [
+                "If this is the first time, you may just monitor closely.",
+                "If repeated, pause exam and issue the warning.",
+                "Log 'Behavioral Observation' in notes."
+            ]
+        },
+        sus_result: {
+            type: "result",
+            severity: "revocation",
+            title: "Action: Revocation (Suspicion of Cheating)",
+            script: "Excuse me. I am ending your exam due to repeated suspicious behavior and failure to follow the camera policy.",
+            steps: [
+                "Stop the exam.",
+                "Ensure you have noted the timestamps of the repeated looks.",
+                "File report under 'Suspicious Behavior'."
+            ]
+        }
+    };
+
+    // --- APP LOGIC ---
+    let historyStack = [];
+
+    function renderNode(nodeKey) {
+        const container = document.getElementById('tree-container');
+        const node = decisionData[nodeKey];
+
+        // Fade out effect could go here, but keeping it simple for raw HTML
+        container.innerHTML = '';
+
+        if (node.type === 'result') {
+            renderResult(node, container);
+        } else {
+            renderQuestion(node, nodeKey, container);
+        }
+    }
+
+    function renderQuestion(node, nodeKey, container) {
+        // Title
+        const title = document.createElement('div');
+        title.className = 'step-title';
+        title.innerText = node.text;
+        container.appendChild(title);
+
+        // Options
+        if (node.options) {
+            node.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt.text;
+                btn.onclick = () => {
+                    historyStack.push(nodeKey);
+                    renderNode(opt.next || 'start'); // Default to start if broken link
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        addControls(container, false);
+    }
+
+    function renderResult(node, container) {
+        const resultBox = document.createElement('div');
+        resultBox.className = `result-box ${node.severity}`;
+
+        const title = document.createElement('h3');
+        title.style.marginTop = '0';
+        title.innerText = node.title;
+        resultBox.appendChild(title);
+
+        if (node.script) {
+            const scriptLabel = document.createElement('strong');
+            scriptLabel.innerText = "Script to Read:";
+            resultBox.appendChild(scriptLabel);
+
+            const scriptBlock = document.createElement('div');
+            scriptBlock.className = 'script-block';
+            scriptBlock.innerText = `"${node.script}"`;
+            resultBox.appendChild(scriptBlock);
+        }
+
+        if (node.steps) {
+            const stepsDiv = document.createElement('div');
+            stepsDiv.className = 'action-steps';
+            stepsDiv.innerHTML = '<strong>Next Steps:</strong><ul>' + 
+                node.steps.map(step => `<li>${step}</li>`).join('') + 
+                '</ul>';
+            resultBox.appendChild(stepsDiv);
+        }
+
+        container.appendChild(resultBox);
+        addControls(container, true);
+    }
+
+    function addControls(container, isResult) {
+        const controls = document.createElement('div');
+        controls.className = 'nav-controls';
+
+        // Back Button
+        if (historyStack.length > 0) {
+            const backBtn = document.createElement('button');
+            backBtn.className = 'nav-btn';
+            backBtn.innerText = '← Back';
+            backBtn.onclick = () => {
+                const prev = historyStack.pop();
+                renderNode(prev);
+            };
+            controls.appendChild(backBtn);
+        } else {
+            controls.appendChild(document.createElement('div')); // Spacer
+        }
+
+        // Reset Button
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'nav-btn';
+        resetBtn.innerText = 'Start Over ↻';
+        resetBtn.onclick = () => {
+            historyStack = [];
+            renderNode('start');
+        };
+        controls.appendChild(resetBtn);
+
+        container.appendChild(controls);
+    }
+
+    function toggleMatrix() {
+        const content = document.getElementById('severity-content');
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+        } else {
+            content.style.display = 'block';
+        }
+    }
+
+    // Initialize
+    renderNode('start');
+
+</script>
+
+</body>
+</html>
